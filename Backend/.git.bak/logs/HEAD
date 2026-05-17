@@ -1,8 +1,0 @@
-0000000000000000000000000000000000000000 5027ee174992b2d35af11e66480401a5b27eecc3 alwahibrr <alwahibraffi@gmail.com> 1777567119 +0700	commit (initial): deploy backend
-5027ee174992b2d35af11e66480401a5b27eecc3 3c9385b5aed64f5be22bc01b46b6bda1d6a866a2 alwahibrr <alwahibraffi@gmail.com> 1777653344 +0700	commit: deploy backend fixing
-3c9385b5aed64f5be22bc01b46b6bda1d6a866a2 84c12f0b734eba32342f5feaf269a55685ef2862 alwahibrr <alwahibraffi@gmail.com> 1777659877 +0700	commit: deploy backend fixing
-84c12f0b734eba32342f5feaf269a55685ef2862 0a692d8e9279384c27638da8ebac916c9d4ff200 alwahibrr <alwahibraffi@gmail.com> 1777662525 +0700	commit: deploy backend fixing 2
-0a692d8e9279384c27638da8ebac916c9d4ff200 a674d4701c609c777547acec88e551f63cf4e78e alwahibrr <alwahibraffi@gmail.com> 1777663284 +0700	commit: update database config for Neon connection string
-a674d4701c609c777547acec88e551f63cf4e78e a674d4701c609c777547acec88e551f63cf4e78e alwahibrr <alwahibraffi@gmail.com> 1778910674 +0700	reset: moving to HEAD
-a674d4701c609c777547acec88e551f63cf4e78e a674d4701c609c777547acec88e551f63cf4e78e alwahibrr <alwahibraffi@gmail.com> 1778910864 +0700	checkout: moving from main to Wahib0.0/PreparingBackendFramework
-a674d4701c609c777547acec88e551f63cf4e78e 9271084ff1dee1cd1f7a874faa275e6142190a5e alwahibrr <alwahibraffi@gmail.com> 1778910903 +0700	commit: preparing backend framework to work on project
