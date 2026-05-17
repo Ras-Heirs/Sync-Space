@@ -5,9 +5,10 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
-router.post('/join', participantController.joinRoom);
-router.delete('/leave/:roomId', participantController.leaveRoom);
-router.patch('/:participantId/status', participantController.updateStatus);
-router.get('/room/:roomId', participantController.getParticipants);
+router.post('/', participantController.joinRoom);
+
+router.patch('/:id', participantController.updateStatus);
+
+router.get('/room/:roomId', participantController.getRoomParticipants);
 
 module.exports = router;

@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+body {
+  background-color: #020617; 
+  color: #ffffff;
+  /* Paksa seluruh teks menggunakan Plus Jakarta Sans */
+  font-family: var(--font-jakarta), sans-serif; 
+}
+
+/* Custom Utilities (Biarkan sama seperti sebelumnya) */
+@layer utilities {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .neon-text {
+    background-image: linear-gradient(to right, #22d3ee, #a855f7);
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+}
