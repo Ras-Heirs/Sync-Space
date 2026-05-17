@@ -1,17 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const UserController = require('../controllers/user.controller');
-const { userRegistrationValidation, userUpdateValidation, validate } = require('../utils/validators');
+const userController = require('../controllers/user.controller');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validate, schemas } = require('../middleware/validator');
 
-// Public routes
-router.post('/register', userRegistrationValidation, validate, UserController.register);
-router.post('/login', UserController.login);
+router.use(authMiddleware);
 
-// Protected routes (no JWT, just placeholder)
-router.put('/update', authMiddleware, userUpdateValidation, validate, UserController.updateProfile);
-router.get('/history', UserController.getTransactionHistory);
-router.get('/total-spent', UserController.getTotalSpent);
-router.get('/:email', authMiddleware, UserController.getUserByEmail);
+router.get('/profile', userController.getProfile);
+router.patch('/profile', validate(schemas.updateProfile), userController.updateProfile);
 
 module.exports = router;

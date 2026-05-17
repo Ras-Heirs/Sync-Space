@@ -7,10 +7,9 @@ const { requestLogger } = require('./middleware/requestLogger');
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
-const itemRoutes = require('./routes/itemRoutes');
-const transactionRoutes = require('./routes/transactionRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const participantRoutes = require('./routes/participantRoutes');
 const authRoutes = require('./routes/authRoutes');
-const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -31,7 +30,6 @@ const authLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again after 15 minutes',
 });
 app.use('/auth', authLimiter);
-app.use('/user/register', authLimiter);
 
 // Body parsing
 app.use(express.json());
@@ -42,10 +40,9 @@ app.use(requestLogger);
 
 // API routes
 app.use('/user', userRoutes);
-app.use('/items', itemRoutes);
-app.use('/transaction', transactionRoutes);
+app.use('/rooms', roomRoutes);
+app.use('/participants', participantRoutes);
 app.use('/auth', authRoutes);
-app.use('/reports', reportRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
