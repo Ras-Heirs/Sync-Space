@@ -128,7 +128,7 @@ export default function RoomPage() {
           </div>
 
           <div className="lg:col-span-8">
-            <ChatBox />
+            <ChatBox roomId={roomId} />
           </div>
 
         </div>

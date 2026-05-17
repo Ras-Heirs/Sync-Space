@@ -3,7 +3,7 @@ const roomService = require('../services/room.service');
 exports.getAllRooms = async (req, res, next) => {
   try {
     const filters = req.query;
-    const rooms = await roomService.getAllRooms(filters);
+    const rooms = await roomService.getAllRooms(filters, req.user);
 
     res.status(200).json({
       success: true,

@@ -37,6 +37,17 @@ class ParticipantService {
       status: initialStatus,
     }).returning();
 
+    // Trigger Pusher for Master if PENDING
+    if (initialStatus === 'PENDING') {
+      const pusher = require('../config/pusher');
+      pusher.trigger(`user-${room.masterId}`, 'request-update', {
+        type: 'NEW_REQUEST',
+        roomId: room.id,
+        roomTitle: room.title,
+        participant: newParticipant
+      });
+    }
+
     return newParticipant;
   }
 
@@ -66,6 +77,15 @@ class ParticipantService {
       .set({ status })
       .where(eq(participants.id, participantId))
       .returning();
+
+    // Trigger Pusher for User
+    const pusher = require('../config/pusher');
+    pusher.trigger(`user-${participant.userId}`, 'request-update', {
+      type: 'STATUS_UPDATED',
+      roomId: room.id,
+      roomTitle: room.title,
+      status: status
+    });
 
     return updated;
   }

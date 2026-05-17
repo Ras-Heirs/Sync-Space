@@ -6,6 +6,7 @@ import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import Navbar from '../../components/Navbar'
 import { API_URL } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,6 +14,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) throw error
+    } catch (err: any) {
+      console.error('Google login error:', err)
+      setError(err.message || 'Gagal login dengan Google')
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,6 +133,20 @@ export default function LoginPage() {
                 </div>
               </button>
             </form>
+
+            <div className="my-6 flex items-center gap-4">
+              <div className="flex-1 h-[1px] bg-white/10"></div>
+              <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Atau</span>
+              <div className="flex-1 h-[1px] bg-white/10"></div>
+            </div>
+
+            <button
+              onClick={handleGoogleLogin}
+              className="w-full glass py-4 rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-white/5 transition-all border border-white/10"
+            >
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+              <span>Sign in with Google</span>
+            </button>
 
             <div className="mt-8 text-center text-sm text-gray-500">
               Belum punya akun?{' '}

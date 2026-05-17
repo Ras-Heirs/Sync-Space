@@ -47,16 +47,32 @@ const participants = pgTable("participants", {
   joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow(),
 });
 
+// Messages Table
+const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  roomId: uuid("room_id").notNull().references(() => rooms.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // Relationships
 const usersRelations = relations(users, ({ many }) => ({
   roomsMastered: many(rooms),
   participations: many(participants),
+  messages: many(messages),
 }));
 
 const roomsRelations = relations(rooms, ({ one, many }) => ({
   master: one(users, { fields: [rooms.masterId], reference: [users.id] }),
   category: one(categories, { fields: [rooms.categoryId], reference: [categories.id] }),
   participants: many(participants),
+  messages: many(messages),
+}));
+
+const messagesRelations = relations(messages, ({ one }) => ({
+  room: one(rooms, { fields: [messages.roomId], references: [rooms.id] }),
+  user: one(users, { fields: [messages.userId], references: [users.id] }),
 }));
 
 module.exports = {
@@ -66,6 +82,8 @@ module.exports = {
   categories,
   rooms,
   participants,
+  messages,
   usersRelations,
-  roomsRelations
+  roomsRelations,
+  messagesRelations
 };
