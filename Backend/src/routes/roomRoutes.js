@@ -10,4 +10,8 @@ router.post('/', authMiddleware, validate(schemas.createRoom), roomController.cr
 
 router.get('/:id', roomController.getRoomById);
 
+router.delete('/:id', authMiddleware, roomController.deleteRoom);
+
+router.post('/:id/messages', authMiddleware, roomController.sendMessage);
+
 module.exports = router;

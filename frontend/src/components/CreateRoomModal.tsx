@@ -53,6 +53,7 @@ export default function CreateRoomModal() {
       })
 
       if (response.success) {
+        window.open(`/room/${response.payload.id}`, '_blank')
         window.location.reload()
       } else {
         setError(response.message || 'Gagal membuat ruangan')

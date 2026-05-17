@@ -1,5 +1,5 @@
 const { db } = require('../database/drizzle');
-const { participants, rooms } = require('../models/schema');
+const { participants, rooms, users } = require('../models/schema');
 const { eq, and, count, sql } = require('drizzle-orm');
 
 class ParticipantService {
@@ -17,6 +17,15 @@ class ParticipantService {
     if (existing) {
       if (existing.status === 'JOINED') throw new Error('Already a participant');
       if (existing.status === 'PENDING') throw new Error('Request already pending');
+      if (existing.status === 'REJECTED') {
+        // Allow re-requesting if rejected? For now let's just allow it or keep it rejected.
+        // Let's allow re-requesting by updating the status back to PENDING.
+        const [updated] = await db.update(participants)
+          .set({ status: room.isPrivate ? 'PENDING' : 'JOINED' })
+          .where(eq(participants.id, existing.id))
+          .returning();
+        return updated;
+      }
     }
 
     // Check capacity
@@ -24,12 +33,12 @@ class ParticipantService {
       value: count() 
     }).from(participants).where(and(eq(participants.roomId, roomId), eq(participants.status, 'JOINED')));
     
-    if (participantCount.value >= room.max_capacity) {
+    if (participantCount.value >= room.maxCapacity) {
       throw new Error('Room is full');
     }
 
     // Determine status based on privacy
-    const initialStatus = room.is_private ? 'PENDING' : 'JOINED';
+    const initialStatus = room.isPrivate ? 'PENDING' : 'JOINED';
 
     const [newParticipant] = await db.insert(participants).values({
       roomId,
@@ -71,7 +80,19 @@ class ParticipantService {
   }
 
   async getParticipants(roomId) {
-    return await db.select().from(participants).where(eq(participants.roomId, roomId));
+    return await db.select({
+      id: participants.id,
+      roomId: participants.roomId,
+      userId: participants.userId,
+      status: participants.status,
+      joinedAt: participants.joinedAt,
+      userName: users.name,
+      userImage: users.image,
+      userEmail: users.email
+    })
+    .from(participants)
+    .leftJoin(users, eq(participants.userId, users.id))
+    .where(eq(participants.roomId, roomId));
   }
 }
 

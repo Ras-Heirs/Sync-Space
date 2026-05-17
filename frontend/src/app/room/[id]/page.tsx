@@ -8,41 +8,82 @@ import JoinRoomButton from '../../../components/JoinRoomButton'
 import Navbar from '../../../components/Navbar'
 import { MapPin, Users, Calendar, Info, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { fetchWithAuth } from '../../../lib/api'
+import { fetchWithAuth, API_URL } from '../../../lib/api'
 
 export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
   const [roomData, setRoomData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [userStatus, setUserStatus] = useState<'NONE' | 'PENDING' | 'JOINED' | 'REJECTED'>('NONE')
+  const [isMaster, setIsMaster] = useState(false)
 
   const roomId = params.id as string
 
   useEffect(() => {
-    const fetchRoom = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetchWithAuth(`/rooms/${roomId}`)
         if (response.success) {
           setRoomData(response.payload)
+          
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            const user = JSON.parse(userStr)
+            setIsMaster(response.payload.masterId === user.id)
+            
+            const partResponse = await fetchWithAuth(`/participants/room/${roomId}`)
+            if (partResponse.success) {
+              const participant = partResponse.payload.find((p: any) => p.userId === user.id)
+              if (participant) {
+                setUserStatus(participant.status)
+              }
+            }
+          }
         } else {
           router.push('/dashboard')
         }
       } catch (err) {
-        console.error('Failed to fetch room:', err)
+        console.error('Failed to fetch data:', err)
         router.push('/dashboard')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchRoom()
+    fetchData()
   }, [roomId, router])
+
+  useEffect(() => {
+    if (!roomData || !isMaster) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const handleUnload = () => {
+      fetch(`${API_URL}/rooms/${roomId}`, {
+        method: 'DELETE',
+        keepalive: true,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [roomData, roomId, isMaster]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#020617] flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
+
+  const canChat = isMaster || userStatus === 'JOINED'
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
@@ -128,7 +169,26 @@ export default function RoomPage() {
           </div>
 
           <div className="lg:col-span-8">
-            <ChatBox />
+            {canChat ? (
+              <ChatBox />
+            ) : (
+              <div className="glass rounded-[40px] h-[700px] flex flex-col items-center justify-center p-10 text-center border border-white/10">
+                <div className="w-20 h-20 bg-cyan-500/10 rounded-full flex items-center justify-center mb-6 border border-cyan-500/20">
+                  <Shield size={40} className="text-cyan-500" />
+                </div>
+                <h2 className="text-3xl font-black mb-4">Chat Terkunci</h2>
+                <p className="text-gray-400 max-w-md leading-relaxed">
+                  {userStatus === 'PENDING' 
+                    ? 'Permintaan bergabung Anda sedang diproses oleh pemilik ruangan. Chat akan terbuka setelah Anda diterima.'
+                    : 'Anda harus bergabung ke dalam ruangan ini terlebih dahulu untuk dapat melihat dan mengirim pesan.'}
+                </p>
+                {userStatus === 'NONE' && (
+                  <div className="mt-8 animate-bounce">
+                    <p className="text-cyan-400 font-bold text-sm uppercase tracking-widest">Klik "Join Room" Di Atas</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
