@@ -1,4 +1,13 @@
 require('dotenv').config();
+
+// Check for required env variables
+const requiredEnv = ['DATABASE_URL', 'JWT_SECRET', 'PUSHER_APP_ID', 'PUSHER_KEY', 'PUSHER_SECRET', 'PUSHER_CLUSTER'];
+requiredEnv.forEach(env => {
+  if (!process.env[env]) {
+    console.warn(`Warning: ${env} is not defined in environment variables`);
+  }
+});
+
 const app = require('./src/app');
 const db = require('./src/config/database');
 

@@ -143,7 +143,7 @@ export default function ChatBox({ roomId }: { roomId: string }) {
             onClick={sendMessage}
             className="bg-cyan-500 hover:bg-cyan-400 transition-all px-6 rounded-xl font-bold text-black"
           >
-            Send
+            Kirim
           </button>
         </div>
       </div>

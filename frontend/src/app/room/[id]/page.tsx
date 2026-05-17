@@ -8,41 +8,82 @@ import JoinRoomButton from '../../../components/JoinRoomButton'
 import Navbar from '../../../components/Navbar'
 import { MapPin, Users, Calendar, Info, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { fetchWithAuth } from '../../../lib/api'
+import { fetchWithAuth, API_URL } from '../../../lib/api'
 
 export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
   const [roomData, setRoomData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [userStatus, setUserStatus] = useState<'NONE' | 'PENDING' | 'JOINED' | 'REJECTED'>('NONE')
+  const [isMaster, setIsMaster] = useState(false)
 
   const roomId = params.id as string
 
   useEffect(() => {
-    const fetchRoom = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetchWithAuth(`/rooms/${roomId}`)
         if (response.success) {
           setRoomData(response.payload)
+          
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            const user = JSON.parse(userStr)
+            setIsMaster(response.payload.masterId === user.id)
+            
+            const partResponse = await fetchWithAuth(`/participants/room/${roomId}`)
+            if (partResponse.success) {
+              const participant = partResponse.payload.find((p: any) => p.userId === user.id)
+              if (participant) {
+                setUserStatus(participant.status)
+              }
+            }
+          }
         } else {
           router.push('/dashboard')
         }
       } catch (err) {
-        console.error('Failed to fetch room:', err)
+        console.error('Failed to fetch data:', err)
         router.push('/dashboard')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchRoom()
+    fetchData()
   }, [roomId, router])
+
+  useEffect(() => {
+    if (!roomData || !isMaster) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const handleUnload = () => {
+      fetch(`${API_URL}/rooms/${roomId}`, {
+        method: 'DELETE',
+        keepalive: true,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, [roomData, roomId, isMaster]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#020617] flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
+
+  const canChat = isMaster || userStatus === 'JOINED'
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">

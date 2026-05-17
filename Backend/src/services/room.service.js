@@ -125,6 +125,7 @@ class RoomService {
     if (filters.status) {
       conditions.push(eq(rooms.status, filters.status));
     } else {
+      // Default to showing only OPEN rooms unless specified
       conditions.push(eq(rooms.status, 'OPEN'));
     }
 
@@ -167,6 +168,20 @@ class RoomService {
     .where(eq(rooms.id, id));
     
     return room;
+  }
+
+  async deleteRoom(id, userId) {
+    const room = await this.getRoomById(id);
+    if (!room) {
+      throw new AppError('Room not found', 404);
+    }
+
+    if (room.masterId !== userId) {
+      throw new AppError('Unauthorized: Only the room master can delete this room', 403);
+    }
+
+    await db.delete(rooms).where(eq(rooms.id, id));
+    return { id };
   }
 }
 
