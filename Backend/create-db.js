@@ -3,7 +3,6 @@ require('dotenv').config();
 
 async function createDatabase() {
   const dbName = process.env.DB_NAME || 'sbd_store_simple';
-  // Connect to default postgres database
   const client = new Client({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -16,10 +15,8 @@ async function createDatabase() {
     await client.connect();
     console.log('Connected to PostgreSQL (postgres database)');
     
-    // Check if database exists
     const res = await client.query(`SELECT 1 FROM pg_database WHERE datname = '${dbName}'`);
     if (res.rows.length === 0) {
-      // Create database
       await client.query(`CREATE DATABASE ${dbName}`);
       console.log(`Database ${dbName} created`);
     } else {

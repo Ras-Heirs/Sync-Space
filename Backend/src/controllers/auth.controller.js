@@ -15,6 +15,21 @@ class AuthController {
       next(error);
     }
   }
+
+  static async register(req, res, next) {
+    try {
+      const { name, email, password } = req.body;
+      const result = await UserService.register({ name, email, password });
+
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful',
+        payload: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = AuthController;

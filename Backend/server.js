@@ -2,9 +2,8 @@ require('dotenv').config();
 const app = require('./src/app');
 const db = require('./src/config/database');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Test database connection
 if (process.env.NODE_ENV !== 'production') {
   db.query('SELECT NOW()')
     .then(() => {
@@ -20,5 +19,4 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Export the app for Vercel serverless deployment
 module.exports = app;

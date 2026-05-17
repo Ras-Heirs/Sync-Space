@@ -1,13 +1,5 @@
 const { body, param, query } = require('express-validator');
 
-// TODO: Buat pola regex untuk validasi berikut (jangan gunakan pola yang diberikan di completed_backend).
-// Email: harus valid (misal: user@domain.com).
-// Password: minimal 10 karakter, mengandung huruf besar, huruf kecil, angka, dan karakter spesial.
-// Username: hanya boleh mengandung huruf, angka, dan underscore (3-20 karakter).
-// Phone: format internasional (opsional, dapat dimulai dengan +, diikuti digit, spasi, atau strip).
-// Description: opsional, bebas tetapi batasi panjang (misal maksimal 500 karakter).
-
-// Validation rules
 const userRegistrationValidation = [
   body('name')
     .trim()
@@ -17,27 +9,19 @@ const userRegistrationValidation = [
     .trim()
     .notEmpty().withMessage('Username is required')
     .isLength({ min: 3, max: 20 }).withMessage('Username must be between 3 and 20 characters')
-    .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores')
-    // TODO: tambahkan validasi regex untuk username (hanya huruf, angka, underscore)
-    ,
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores'),
   body('email')
     .trim()
     .notEmpty().withMessage('Email is required')
-    .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).withMessage('Email must be valid')
-    // TODO: tambahkan validasi regex untuk email
-    ,
+    .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).withMessage('Email must be valid'),
   body('phone')
     .optional()
     .trim()
-    .matches(/^\+?[\d\s-]+$/).withMessage('Phone number must be in international format')
-    // TODO: tambahkan validasi regex untuk phone (format internasional)
-    ,
+    .matches(/^\+?[\d\s-]+$/).withMessage('Phone number must be in international format'),
   body('password')
     .trim()
     .notEmpty().withMessage('Password is required')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/).withMessage('Password must be at least 10 characters, containing uppercase, lowercase, numbers, and special characters')
-    // TODO: tambahkan validasi regex untuk password
-    ,
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/).withMessage('Password must be at least 10 characters, containing uppercase, lowercase, numbers, and special characters'),
 ];
 
 const userUpdateValidation = [
@@ -51,27 +35,19 @@ const userUpdateValidation = [
     .optional()
     .trim()
     .isLength({ min: 3, max: 20 }).withMessage('Username must be between 3 and 20 characters')
-    .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores')
-    // TODO: validasi regex untuk username
-    ,
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores'),
   body('email')
     .optional()
     .trim()
-    .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).withMessage('Email must be valid')
-    // TODO: validasi regex untuk email
-    ,
+    .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).withMessage('Email must be valid'),
   body('phone')
     .optional()
     .trim()
-    .matches(/^\+?[\d\s-]+$/).withMessage('Phone number must be in international format')
-    // TODO: validasi regex untuk phone
-    ,
+    .matches(/^\+?[\d\s-]+$/).withMessage('Phone number must be in international format'),
   body('password')
     .optional()
     .trim()
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/).withMessage('Password must be at least 10 characters, containing uppercase, lowercase, numbers, and special characters')
-    // TODO: validasi regex untuk password
-    ,
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/).withMessage('Password must be at least 10 characters, containing uppercase, lowercase, numbers, and special characters'),
   body('balance')
     .optional()
     .isInt({ min: 0 }).withMessage('Balance must be a non-negative integer'),
@@ -118,7 +94,6 @@ const validate = (req, res, next) => {
 };
 
 module.exports = {
-  // emailRegex, passwordRegex, phoneRegex dihapus
   userRegistrationValidation,
   userUpdateValidation,
   transactionCreationValidation,

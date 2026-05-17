@@ -1,80 +1,75 @@
-const User = require('../models/user.model');
-const { AppError } = require('../middleware/errorHandler');
+const db = require('../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 class UserService {
-  static async register({ name, username, email, phone, password }) {
-    // Check if user already exists by email
-    const existingUserByEmail = await User.findByEmail(email);
-    if (existingUserByEmail) {
-      throw new AppError('User with this email already exists', 400);
-    }
-    // Note: username uniqueness is enforced by database constraint
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      name,
-      username,
-      email,
-      phone,
-      password: hashedPassword,
-    });
-
-    return user;
+  async getUserById(id) {
+    const result = await db.query('SELECT id, name, email, image, domicile as domisili, hobbies, created_at FROM users WHERE id = $1', [id]);
+    return result.rows[0];
   }
 
-  static async login(email, password) {
-    const user = await User.findByEmail(email);
-    if (!user) {
-      throw new AppError('Invalid email or password', 401);
+  async updateProfile(id, profileData) {
+    const { name, domisili, hobbies, image } = profileData;
+    const result = await db.query(
+      `UPDATE users 
+       SET name = $1, domicile = $2, hobbies = $3, image = $4 
+       WHERE id = $5 
+       RETURNING id, name, email, image, domicile as domisili, hobbies, created_at`,
+      [name, domisili, hobbies, image, id]
+    );
+    return result.rows[0];
+  }
+
+  async getUserByEmail(email) {
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0];
+  }
+
+  async register(userData) {
+    const { name, email, password } = userData;
+    
+    const existingUser = await this.getUserByEmail(email);
+    if (existingUser) {
+      throw new Error('Email already registered');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await db.query(
+      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email',
+      [name, email, hashedPassword]
+    );
+
+    const newUser = result.rows[0];
+    const token = this.generateToken(newUser);
+
+    return { user: newUser, token };
+  }
+
+  async login(email, password) {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.password) {
+      throw new Error('Invalid email or password');
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
-    // Compare plain text passwords (insecure)
     if (!isMatch) {
-      throw new AppError('Invalid email or password', 401);
+      throw new Error('Invalid email or password');
     }
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'secret_key',
-      { expiresIn: '24h' }
+    const { password: _, ...userWithoutPassword } = user;
+    const token = this.generateToken(userWithoutPassword);
+
+    return { user: userWithoutPassword, token };
+  }
+
+  generateToken(user) {
+    return jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET || 'your_jwt_secret_key_here',
+      { expiresIn: '1d' }
     );
-
-    return { 
-      user: { id: user.id, name: user.name, username: user.username, email: user.email, phone: user.phone, balance: user.balance },
-      token 
-    };
-  }
-
-  static async updateProfile(id, updateData) {
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
-    }
-
-    const updatedUser = await User.update(id, updateData);
-    if (!updatedUser) {
-      throw new AppError('User not found', 404);
-    }
-    return updatedUser;
-  }
-
-  static async getTransactionHistory(userId) {
-    const transactions = await User.getTransactionHistory(userId);
-    return transactions;
-  }
-
-  static async getTotalSpent(userId) {
-    const total = await User.getTotalSpent(userId);
-    return total;
-  }
-
-  static async getUserByEmail(email) {
-    const user = await User.findByEmail(email);
-    return user;
   }
 }
 
-module.exports = UserService;
+module.exports = new UserService();
