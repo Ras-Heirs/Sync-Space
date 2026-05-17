@@ -5,11 +5,11 @@ import RoomCard from './RoomCard'
 interface Room {
   id?: string
   title: string
-  lokasi_wilayah: string
-  participants: number
-  kuota_maksimal: number
-  category?: string
-  is_private?: boolean
+  region: string
+  currentParticipants: number
+  maxCapacity: number
+  categoryName?: string
+  isPrivate?: boolean
   status?: string
 }
 
@@ -35,11 +35,11 @@ export default function RoomSection({ title, rooms }: Props) {
             key={room.id || index}
             id={room.id}
             title={room.title}
-            category={room.category || categoryText}
-            lokasi_wilayah={room.lokasi_wilayah}
-            participants={room.participants}
-            kuota_maksimal={room.kuota_maksimal}
-            is_private={room.is_private}
+            category={room.categoryName || categoryText}
+            region={room.region}
+            participants={room.currentParticipants}
+            maxCapacity={room.maxCapacity}
+            isPrivate={room.isPrivate}
             status={room.status}
           />
         ))}

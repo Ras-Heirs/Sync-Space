@@ -46,11 +46,12 @@ export default function RegisterPage() {
         localStorage.setItem('user', JSON.stringify(data.payload.user))
         router.push('/dashboard')
       } else {
-        setError(data.message || 'Registration failed')
+        // Detailed error from backend Joi validation
+        setError(data.message || 'Pendaftaran gagal')
       }
     } catch (err) {
       console.error('Registration error:', err)
-      setError('Connection to server failed')
+      setError('Koneksi ke server gagal')
     } finally {
       setLoading(false)
     }
@@ -74,8 +75,11 @@ export default function RegisterPage() {
 
             <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {error && (
-                <div className="md:col-span-2 bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-sm font-medium text-center">
-                  {error}
+                <div className="md:col-span-2 bg-red-500/10 border-2 border-red-500/50 text-red-500 p-5 rounded-2xl text-sm font-bold flex items-center gap-4 animate-shake">
+                  <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center shrink-0">
+                    <AlertCircle size={22} />
+                  </div>
+                  <span>{error}</span>
                 </div>
               )}
               

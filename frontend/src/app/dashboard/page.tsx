@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { Plus, Search, Filter, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import RoomSection from '../../components/RoomSection'
 import Navbar from '../../components/Navbar'
@@ -15,40 +15,67 @@ export default function DashboardPage() {
   const [showPortalAnimation, setShowPortalAnimation] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
+  
+  // Filter States
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('')
+  const [region, setRegion] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const fetchRooms = useCallback(async () => {
+    setLoading(true)
+    try {
+      const queryParams = new URLSearchParams()
+      if (search) queryParams.append('search', search)
+      if (category) queryParams.append('categoryName', category)
+      if (region) queryParams.append('region', region)
+
+      const response = await fetchWithAuth(`/rooms?${queryParams.toString()}`)
+      if (response.success) {
+        setRooms(response.payload)
+      }
+    } catch (err) {
+      console.error('Failed to fetch rooms:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [search, category, region])
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = localStorage.getItem('token')
-      
-      if (!isAuth) {
-        router.push('/')
-      } else {
-        setCheckingAuth(false)
-        
-        try {
-          const response = await fetchWithAuth('/rooms')
-          if (response.success) {
-            setRooms(response.payload)
-          }
-        } catch (err) {
-          console.error('Failed to fetch rooms:', err)
-        }
-
-        setTimeout(() => {
-          setShowPortalAnimation(false)
-        }, 1500)
-      }
+    const isAuth = localStorage.getItem('token')
+    if (!isAuth) {
+      router.push('/')
+      return
     }
-
-    checkAuth()
+    setCheckingAuth(false)
+    
+    // Initial fetch handled by the other useEffect or could be here
   }, [router])
 
-  const studyRooms = rooms.filter(r => r.category_name === 'Education')
-  const gamingRooms = rooms.filter(r => r.category_name === 'Gaming')
-  const hangoutRooms = rooms.filter(r => r.category_name === 'Social')
-  const sportsRooms = rooms.filter(r => r.category_name === 'Sports')
-  const musicRooms = rooms.filter(r => r.category_name === 'Music')
-  const hobbyRooms = rooms.filter(r => r.category_name === 'Hobbies')
+  useEffect(() => {
+    if (checkingAuth) return
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchRooms()
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [fetchRooms, checkingAuth])
+
+  useEffect(() => {
+    if (!checkingAuth) {
+      setTimeout(() => {
+        setShowPortalAnimation(false)
+      }, 1500)
+    }
+  }, [checkingAuth])
+
+  const studyRooms = rooms.filter(r => r.categoryName === 'Education')
+  const gamingRooms = rooms.filter(r => r.categoryName === 'Gaming')
+  const hangoutRooms = rooms.filter(r => r.categoryName === 'Social')
+  const sportsRooms = rooms.filter(r => r.categoryName === 'Sports')
+  const musicRooms = rooms.filter(r => r.categoryName === 'Music')
+  const hobbyRooms = rooms.filter(r => r.categoryName === 'Hobbies')
 
   if (checkingAuth) return null
 
@@ -92,30 +119,93 @@ export default function DashboardPage() {
 
         <main className="max-w-7xl mx-auto p-10">
           
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 mb-16">
-            <div>
-              <h1 className="text-5xl font-black neon-text">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-8 mb-16">
+            <div className="flex-1">
+              <h1 className="text-5xl font-black neon-text mb-6">
                 Explore Rooms
               </h1>
-              <p className="text-gray-400 mt-2">Temukan atau buat meja aktivitas sosialmu hari ini.</p>
+              
+              {/* Search and Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Cari ruangan..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-cyan-500/50 transition-all"
+                  />
+                </div>
+
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 outline-none focus:border-cyan-500/50 appearance-none text-gray-300"
+                  >
+                    <option value="" className="bg-[#020617]">Semua Kategori</option>
+                    <option value="Education" className="bg-[#020617]">📚 Study Group</option>
+                    <option value="Gaming" className="bg-[#020617]">🎮 Gaming</option>
+                    <option value="Social" className="bg-[#020617]">☕ Hangout</option>
+                    <option value="Sports" className="bg-[#020617]">⚽ Sports</option>
+                    <option value="Music" className="bg-[#020617]">🎸 Music</option>
+                    <option value="Hobbies" className="bg-[#020617]">🎨 Hobbies</option>
+                  </select>
+                </div>
+
+                <div className="relative group">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Filter wilayah..."
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-cyan-500/50 transition-all"
+                  />
+                </div>
+              </div>
             </div>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold px-6 py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:shadow-[0_0_35px_rgba(168,85,247,0.4)] active:scale-95 cursor-pointer self-start sm:self-auto text-lg"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:shadow-[0_0_35px_rgba(168,85,247,0.4)] active:scale-95 cursor-pointer text-lg h-fit"
             >
               <Plus size={22} />
               Create New Table
             </button>
           </div>
 
-          <div className="space-y-4">
-            <RoomSection title="📚 Study Rooms" rooms={studyRooms} />
-            <RoomSection title="🎮 Gaming Rooms" rooms={gamingRooms} />
-            <RoomSection title="☕ Hangout Rooms" rooms={hangoutRooms} />
-            <RoomSection title="⚽ Sports" rooms={sportsRooms} />
-            <RoomSection title="🎸 Music" rooms={musicRooms} />
-            <RoomSection title="🎨 Hobbies" rooms={hobbyRooms} />
+          <div className="space-y-4 min-h-[400px]">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-400 font-bold animate-pulse">Menghubungkan Portal...</p>
+              </div>
+            ) : rooms.length > 0 ? (
+              <>
+                <RoomSection title="📚 Study Rooms" rooms={studyRooms} />
+                <RoomSection title="🎮 Gaming Rooms" rooms={gamingRooms} />
+                <RoomSection title="☕ Hangout Rooms" rooms={hangoutRooms} />
+                <RoomSection title="⚽ Sports" rooms={sportsRooms} />
+                <RoomSection title="🎸 Music" rooms={musicRooms} />
+                <RoomSection title="🎨 Hobbies" rooms={hobbyRooms} />
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
+                  <Filter size={40} className="text-gray-600" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Tidak Ada Ruangan</h3>
+                <p className="text-gray-400 max-w-md">Tidak menemukan ruangan yang cocok dengan filter kamu. Coba ubah kata kunci atau wilayah.</p>
+                <button 
+                  onClick={() => { setSearch(''); setCategory(''); setRegion(''); }}
+                  className="mt-6 text-cyan-400 font-bold hover:underline"
+                >
+                  Reset Filter
+                </button>
+              </div>
+            )}
           </div>
         </main>
       </motion.div>
@@ -136,3 +226,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+import { MapPin } from 'lucide-react'
