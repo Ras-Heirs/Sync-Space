@@ -1,80 +1,81 @@
-const User = require('../models/user.model');
-const { AppError } = require('../middleware/errorHandler');
+const { db } = require('../database/drizzle');
+const { users } = require('../models/schema');
+const { eq } = require('drizzle-orm');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 class UserService {
-  static async register({ name, username, email, phone, password }) {
-    // Check if user already exists by email
-    const existingUserByEmail = await User.findByEmail(email);
-    if (existingUserByEmail) {
-      throw new AppError('User with this email already exists', 400);
-    }
-    // Note: username uniqueness is enforced by database constraint
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      name,
-      username,
-      email,
-      phone,
-      password: hashedPassword,
-    });
-
+  async getUserById(id) {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  static async login(email, password) {
-    const user = await User.findByEmail(email);
-    if (!user) {
-      throw new AppError('Invalid email or password', 401);
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    // Compare plain text passwords (insecure)
-    if (!isMatch) {
-      throw new AppError('Invalid email or password', 401);
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'secret_key',
-      { expiresIn: '24h' }
-    );
-
-    return { 
-      user: { id: user.id, name: user.name, username: user.username, email: user.email, phone: user.phone, balance: user.balance },
-      token 
-    };
-  }
-
-  static async updateProfile(id, updateData) {
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
-    }
-
-    const updatedUser = await User.update(id, updateData);
-    if (!updatedUser) {
-      throw new AppError('User not found', 404);
-    }
+  async updateProfile(id, profileData) {
+    const [updatedUser] = await db.update(users)
+      .set({
+        name: profileData.name,
+        domicile: profileData.domicile,
+        hobbies: profileData.hobbies,
+        image: profileData.image,
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
     return updatedUser;
   }
 
-  static async getTransactionHistory(userId) {
-    const transactions = await User.getTransactionHistory(userId);
-    return transactions;
-  }
-
-  static async getTotalSpent(userId) {
-    const total = await User.getTotalSpent(userId);
-    return total;
-  }
-
-  static async getUserByEmail(email) {
-    const user = await User.findByEmail(email);
+  async getUserByEmail(email) {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async register(userData) {
+    const { name, email, password } = userData;
+    
+    // Check if user exists
+    const existingUser = await this.getUserByEmail(email);
+    if (existingUser) {
+      throw new Error('Email already registered');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [newUser] = await db.insert(users).values({
+      name,
+      email,
+      password: hashedPassword,
+    }).returning();
+
+    // Generate token
+    const token = this.generateToken(newUser);
+
+    return { user: newUser, token };
+  }
+
+  async login(email, password) {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.password) {
+      throw new Error('Invalid email or password');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Invalid email or password');
+    }
+
+    const token = this.generateToken(user);
+
+    return { user, token };
+  }
+
+  generateToken(user) {
+    return jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET || 'secret_key',
+      { expiresIn: '1d' }
+    );
   }
 }
 
-module.exports = UserService;
+module.exports = new UserService();
