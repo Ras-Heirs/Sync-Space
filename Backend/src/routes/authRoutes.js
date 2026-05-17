@@ -5,5 +5,6 @@ const { validate, schemas } = require('../middleware/validator');
 
 router.post('/login', validate(schemas.login), AuthController.login);
 router.post('/register', validate(schemas.register), AuthController.register);
+router.post('/google', AuthController.googleLogin);
 
 module.exports = router;

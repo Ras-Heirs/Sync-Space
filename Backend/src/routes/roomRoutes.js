@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const roomController = require('../controllers/room.controller');
 const authMiddleware = require('../middleware/authMiddleware');
+const optionalAuth = require('../middleware/optionalAuth');
 const { validate, schemas } = require('../middleware/validator');
 
-router.get('/', roomController.getAllRooms);
+router.get('/', optionalAuth, roomController.getAllRooms);
 
 router.post('/', authMiddleware, validate(schemas.createRoom), roomController.createRoom);
 

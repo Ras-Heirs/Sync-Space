@@ -1,195 +1,154 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../lib/supabase'
+import { fetchWithAuth } from '../../lib/api'
+import { MapPin, Tag, User, Camera } from 'lucide-react'
+import Navbar from '../../components/Navbar'
 
 export default function CompleteProfilePage() {
-
   const router = useRouter()
+  const [name, setName] = useState('')
+  const [domicile, setDomicile] = useState('')
+  const [hobbies, setHobbies] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const [nickname, setNickname] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [photo, setPhoto] = useState<File | null>(null)
-
-  const handleSave = async () => {
-
-    const {
-      data: { user }
-    } = await supabase.auth.getUser()
-
-    if (!user) return
-
-    let avatarUrl = ''
-
-    if (photo) {
-
-      const fileName =
-        `${user.id}-${Date.now()}`
-
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, photo)
-
-      if (!error) {
-
-        const {
-          data: publicUrl
-        } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName)
-
-        avatarUrl = publicUrl.publicUrl
+  useEffect(() => {
+    const userJson = localStorage.getItem('user')
+    if (userJson) {
+      const user = JSON.parse(userJson)
+      setName(user.name || '')
+      if (user.domicile) {
+        router.push('/dashboard')
       }
+    } else {
+      router.push('/login')
     }
+  }, [router])
 
-    await supabase
-      .from('users')
-      .insert({
-        id: user.id,
-        email: user.email,
-        nickname,
-        full_name: fullName,
-        whatsapp,
-        avatar_url: avatarUrl
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const hobbyArray = hobbies.split(',').map(h => h.trim()).filter(h => h !== '')
+      
+      const response = await fetchWithAuth('/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          name,
+          domicile,
+          hobbies: hobbyArray
+        })
       })
 
-    router.push('/dashboard')
+      if (response.success) {
+        localStorage.setItem('user', JSON.stringify(response.payload))
+        router.push('/dashboard')
+      } else {
+        setError(response.message || 'Gagal menyimpan profil')
+      }
+    } catch (err: any) {
+      console.error('Update profile error:', err)
+      setError(err.message || 'Terjadi kesalahan sistem')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
+    <main className="min-h-screen bg-[#020617] text-white flex flex-col">
+      <Navbar />
+      
+      <div className="flex-1 flex items-center justify-center p-6 relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[120px] -z-10"></div>
+        
+        <div className="w-full max-w-2xl">
+          <div className="glass p-12 rounded-[48px] border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
+            
+            <div className="mb-12 text-center">
+              <h1 className="text-5xl font-black neon-text mb-4">Complete Your Identity</h1>
+              <p className="text-gray-400">Sedikit lagi untuk memulai perjalananmu di Sync-Space</p>
+            </div>
 
-    <main className="
-      min-h-screen
-      flex
-      items-center
-      justify-center
-      p-10
-    ">
+            <form onSubmit={handleSave} className="space-y-8">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-bold text-center">
+                  {error}
+                </div>
+              )}
 
-      <div className="
-        glass
-        w-[700px]
-        rounded-[40px]
-        p-10
-      ">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-400 ml-1">Full Name</label>
+                  <div className="relative group">
+                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" size={20} />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Nama Lengkap"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all"
+                    />
+                  </div>
+                </div>
 
-        <h1 className="
-          text-5xl
-          font-black
-          mb-10
-          text-center
-        ">
-          Complete Your Profile
-        </h1>
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-gray-400 ml-1">Domicile (Region)</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
+                    <input
+                      type="text"
+                      required
+                      value={domicile}
+                      onChange={(e) => setDomicile(e.target.value)}
+                      placeholder="Contoh: Jakarta Tengah"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
 
-        <div className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-gray-400 ml-1">Hobbies (Separated by comma)</label>
+                <div className="relative group">
+                  <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
+                  <input
+                    type="text"
+                    required
+                    value={hobbies}
+                    onChange={(e) => setHobbies(e.target.value)}
+                    placeholder="Gaming, Sports, Music..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 ml-1 italic">*Hobi digunakan untuk memberikan rekomendasi room yang cocok untukmu.</p>
+              </div>
 
-          <div>
-
-            <label className="block mb-2">
-              Profile Photo
-            </label>
-
-            <input
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={(e) =>
-                setPhoto(
-                  e.target.files?.[0] || null
-                )
-              }
-              className="w-full"
-            />
-
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#020617] py-5 rounded-2xl font-black text-xl transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+              >
+                {loading ? (
+                  <div className="w-8 h-8 border-4 border-[#020617] border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <span>START EXPLORING</span>
+                    <ArrowRight size={24} />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
-
-          <div>
-
-            <label className="block mb-2">
-              Nickname
-            </label>
-
-            <input
-              value={nickname}
-              onChange={(e) =>
-                setNickname(e.target.value)
-              }
-              className="
-                w-full
-                bg-white/10
-                rounded-2xl
-                px-6
-                py-5
-              "
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2">
-              Full Name
-            </label>
-
-            <input
-              value={fullName}
-              onChange={(e) =>
-                setFullName(e.target.value)
-              }
-              className="
-                w-full
-                bg-white/10
-                rounded-2xl
-                px-6
-                py-5
-              "
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2">
-              WhatsApp Number
-            </label>
-
-            <input
-              value={whatsapp}
-              onChange={(e) =>
-                setWhatsapp(e.target.value)
-              }
-              className="
-                w-full
-                bg-white/10
-                rounded-2xl
-                px-6
-                py-5
-              "
-            />
-
-          </div>
-
-          <button
-            onClick={handleSave}
-            className="
-              w-full
-              bg-cyan-500
-              rounded-2xl
-              py-5
-              text-2xl
-              font-bold
-            "
-          >
-            Complete Setup
-          </button>
-
         </div>
-
       </div>
-
     </main>
   )
 }
+
+import { ArrowRight } from 'lucide-react'

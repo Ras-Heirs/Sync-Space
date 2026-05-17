@@ -41,10 +41,16 @@ class RoomService {
       status: 'JOINED',
     });
 
+    const roomWithCategory = await this.getRoomById(newRoom.id);
+
+    // Trigger Pusher event for Lobby
+    const pusher = require('../config/pusher');
+    pusher.trigger(`lobby-${newRoom.region}`, 'new-room', roomWithCategory);
+
     return newRoom;
   }
 
-  async getAllRooms(filters = {}) {
+  async getAllRooms(filters = {}, user = null) {
     const participantCountSubquery = db
       .select({ 
         roomId: participants.roomId, 
@@ -54,6 +60,24 @@ class RoomService {
       .where(eq(participants.status, 'JOINED'))
       .groupBy(participants.roomId)
       .as('pc');
+
+    // Fetch full user details if only partial user (from token) is provided
+    let fullUser = null;
+    if (user && user.id && !user.domicile) {
+      [fullUser] = await db.select().from(users).where(eq(users.id, user.id));
+    } else {
+      fullUser = user;
+    }
+
+    // Ranking Logic
+    let rankSql = sql`0`;
+    if (fullUser) {
+      const domicileRank = sql`CASE WHEN ${rooms.region} = ${fullUser.domicile} THEN 1 ELSE 0 END`;
+      const hobbiesRank = fullUser.hobbies && fullUser.hobbies.length > 0 
+        ? sql`CASE WHEN ${categories.name} = ANY(${fullUser.hobbies}) THEN 1 ELSE 0 END`
+        : sql`0`;
+      rankSql = sql`(${domicileRank} + ${hobbiesRank})`;
+    }
 
     let query = db.select({
       id: rooms.id,
@@ -69,6 +93,7 @@ class RoomService {
       createdAt: rooms.createdAt,
       categoryName: categories.name,
       currentParticipants: sql`COALESCE(${participantCountSubquery.count}, 0)`.mapWith(Number),
+      rank: rankSql.as('rank')
     })
     .from(rooms)
     .leftJoin(categories, eq(rooms.categoryId, categories.id))
@@ -108,7 +133,7 @@ class RoomService {
       query = query.where(and(...conditions));
     }
 
-    return await query.orderBy(desc(rooms.createdAt));
+    return await query.orderBy(desc(rankSql), desc(rooms.createdAt));
   }
 
   async getRoomById(id) {

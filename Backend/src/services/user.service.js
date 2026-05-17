@@ -70,6 +70,34 @@ class UserService {
     return { user: userWithoutPassword, token };
   }
 
+  async upsertGoogleUser(userData) {
+    const { email, name, image } = userData;
+    
+    let user = await this.getUserByEmail(email);
+    
+    if (user) {
+      // Update existing user image if it changed
+      const [updatedUser] = await db.update(users)
+        .set({ name, image })
+        .where(eq(users.email, email))
+        .returning();
+      user = updatedUser;
+    } else {
+      // Create new user
+      const [newUser] = await db.insert(users).values({
+        name,
+        email,
+        image,
+      }).returning();
+      user = newUser;
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    const token = this.generateToken(userWithoutPassword);
+
+    return { user: userWithoutPassword, token };
+  }
+
   generateToken(user) {
     return jwt.sign(
       { id: user.id, email: user.email },

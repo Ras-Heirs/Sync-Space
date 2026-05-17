@@ -169,26 +169,7 @@ export default function RoomPage() {
           </div>
 
           <div className="lg:col-span-8">
-            {canChat ? (
-              <ChatBox />
-            ) : (
-              <div className="glass rounded-[40px] h-[700px] flex flex-col items-center justify-center p-10 text-center border border-white/10">
-                <div className="w-20 h-20 bg-cyan-500/10 rounded-full flex items-center justify-center mb-6 border border-cyan-500/20">
-                  <Shield size={40} className="text-cyan-500" />
-                </div>
-                <h2 className="text-3xl font-black mb-4">Chat Terkunci</h2>
-                <p className="text-gray-400 max-w-md leading-relaxed">
-                  {userStatus === 'PENDING' 
-                    ? 'Permintaan bergabung Anda sedang diproses oleh pemilik ruangan. Chat akan terbuka setelah Anda diterima.'
-                    : 'Anda harus bergabung ke dalam ruangan ini terlebih dahulu untuk dapat melihat dan mengirim pesan.'}
-                </p>
-                {userStatus === 'NONE' && (
-                  <div className="mt-8 animate-bounce">
-                    <p className="text-cyan-400 font-bold text-sm uppercase tracking-widest">Klik "Join Room" Di Atas</p>
-                  </div>
-                )}
-              </div>
-            )}
+            <ChatBox roomId={roomId} />
           </div>
 
         </div>

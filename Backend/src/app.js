@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const participantRoutes = require('./routes/participantRoutes');
 const authRoutes = require('./routes/authRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/user', userRoutes);
 app.use('/rooms', roomRoutes);
 app.use('/participants', participantRoutes);
 app.use('/auth', authRoutes);
+app.use('/messages', messageRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });

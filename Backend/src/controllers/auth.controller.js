@@ -30,6 +30,21 @@ class AuthController {
       next(error);
     }
   }
+
+  static async googleLogin(req, res, next) {
+    try {
+      const { email, name, image } = req.body;
+      const result = await UserService.upsertGoogleUser({ email, name, image });
+
+      res.status(200).json({
+        success: true,
+        message: 'Google login successful',
+        payload: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = AuthController;
