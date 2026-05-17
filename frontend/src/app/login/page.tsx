@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogIn, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import Navbar from '../../components/Navbar'
 import { API_URL } from '../../lib/api'
@@ -33,11 +33,11 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.payload.user))
         router.push('/dashboard')
       } else {
-        setError(data.message || 'Login failed')
+        setError(data.message || 'Login gagal')
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError('Connection to server failed')
+      setError('Koneksi ke server gagal')
     } finally {
       setLoading(false)
     }
@@ -61,8 +61,11 @@ export default function LoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-6">
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-sm font-medium text-center">
-                  {error}
+                <div className="bg-red-500/10 border-2 border-red-500/50 text-red-500 p-5 rounded-2xl text-sm font-bold flex items-center gap-4 animate-shake">
+                  <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center shrink-0">
+                    <AlertCircle size={22} />
+                  </div>
+                  <span>{error}</span>
                 </div>
               )}
 

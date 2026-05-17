@@ -8,10 +8,10 @@ interface Props {
   id?: string
   title: string
   category: string
-  lokasi_wilayah: string
+  region: string
   participants: number
-  kuota_maksimal: number
-  is_private?: boolean
+  maxCapacity: number
+  isPrivate?: boolean
   status?: string
 }
 
@@ -19,10 +19,10 @@ export default function RoomCard({
   id,
   title,
   category,
-  lokasi_wilayah,
+  region,
   participants,
-  kuota_maksimal,
-  is_private = false,
+  maxCapacity,
+  isPrivate = false,
   status = 'OPEN'
 }: Props) {
   const router = useRouter()
@@ -60,7 +60,7 @@ export default function RoomCard({
               <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-cyan-400">
                 {category}
               </span>
-              {is_private && (
+              {isPrivate && (
                 <span className="px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full text-rose-400 flex items-center justify-center" title="Private Room">
                   <Lock size={12} />
                 </span>
@@ -79,7 +79,7 @@ export default function RoomCard({
 
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-8">
             <MapPin size={14} className="text-slate-500" />
-            <span className="font-medium">{lokasi_wilayah}</span>
+            <span className="font-medium">{region}</span>
           </div>
 
           <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
@@ -88,7 +88,7 @@ export default function RoomCard({
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-cyan-500" />
                 <span className="text-lg font-bold text-white">
-                  {participants}<span className="text-slate-500 text-sm font-normal">/{kuota_maksimal}</span>
+                  {participants}<span className="text-slate-500 text-sm font-normal">/{maxCapacity}</span>
                 </span>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function RoomCard({
               <div className="absolute inset-0 bg-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 shadow-[inset_0_0_20px_rgba(255,255,255,0.2)]" />
 
               <span className="relative z-10 tracking-wide group-hover/btn:text-[#020617] transition-colors duration-300">
-                {status === 'CLOSED' ? 'Closed' : is_private ? 'Request Join' : 'Join'}
+                {status === 'CLOSED' ? 'Closed' : isPrivate ? 'Request Join' : 'Join'}
               </span>
               <ArrowRight size={16} className="relative z-10 group-hover/btn:text-[#020617] group-hover/btn:translate-x-1 transition-all duration-300" />
             </button>

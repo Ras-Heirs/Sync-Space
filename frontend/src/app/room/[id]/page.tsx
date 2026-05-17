@@ -58,13 +58,13 @@ export default function RoomPage() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-xs font-bold text-cyan-400 uppercase tracking-widest">
-                {roomData?.category_name}
+                {roomData?.categoryName}
               </span>
               <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-bold text-emerald-400 uppercase">{roomData?.status}</span>
               </div>
-              {roomData?.is_private && (
+              {roomData?.isPrivate && (
                 <span className="flex items-center gap-1 px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded-md text-[10px] font-bold text-rose-400 uppercase">
                   <Shield size={12} /> Private
                 </span>
@@ -78,15 +78,15 @@ export default function RoomPage() {
             <div className="flex flex-wrap gap-6 text-gray-400 font-medium">
               <div className="flex items-center gap-2">
                 <MapPin size={18} className="text-cyan-500" />
-                {roomData?.lokasi_wilayah}
+                {roomData?.region}
               </div>
               <div className="flex items-center gap-2">
                 <Users size={18} className="text-purple-500" />
-                {roomData?.current_participants} / {roomData?.kuota_maksimal} Participants
+                {roomData?.currentParticipants} / {roomData?.maxCapacity} Participants
               </div>
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-pink-500" />
-                Started {new Date(roomData?.created_at).toLocaleDateString()}
+                Started {roomData?.createdAt ? new Date(roomData.createdAt).toLocaleDateString() : 'Unknown'}
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function RoomPage() {
             >
               Back to Portal
             </button>
-            <JoinRoomButton />
+            <JoinRoomButton roomId={roomId} isPrivate={roomData?.isPrivate} />
           </div>
         </motion.div>
 
@@ -114,11 +114,11 @@ export default function RoomPage() {
                 {roomData?.description}
               </p>
               
-              {roomData?.activity_details && (
+              {roomData?.activityDetails && (
                 <div className="mt-6 pt-6 border-t border-white/5">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 text-cyan-400">Activity Context</h4>
                   <div className="bg-[#020617] p-4 rounded-2xl font-mono text-sm text-gray-300">
-                    {JSON.stringify(roomData.activity_details, null, 2)}
+                    {JSON.stringify(roomData.activityDetails, null, 2)}
                   </div>
                 </div>
               )}

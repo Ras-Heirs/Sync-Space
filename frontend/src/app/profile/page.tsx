@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User as UserIcon, MapPin, Heart, Mail, Hash, Camera, Plus, X, Check } from 'lucide-react'
+import { User as UserIcon, MapPin, Heart, Mail, Hash, Camera, Plus, X, Check, AlertCircle } from 'lucide-react'
 import Navbar from '../../components/Navbar'
 import { fetchWithAuth } from '../../lib/api'
 
@@ -15,9 +15,10 @@ export default function ProfilePage() {
   const [hobbies, setHobbies] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [error, setError] = useState('')
 
   const [name, setName] = useState('')
-  const [domisili, setDomisili] = useState('')
+  const [domicile, setDomicile] = useState('')
   const [bio, setBio] = useState('')
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function ProfilePage() {
           const data = response.payload
           setProfile(data)
           setName(data.name || '')
-          setDomisili(data.domisili || '')
+          setDomicile(data.domicile || '')
           setHobbies(data.hobbies || [])
         } else {
           router.push('/login')
@@ -57,12 +58,13 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setIsSaving(true)
+    setError('')
     try {
       const response = await fetchWithAuth('/user/profile', {
         method: 'PATCH',
         body: JSON.stringify({
           name,
-          domisili,
+          domicile,
           hobbies,
           image: profile?.image
         })
@@ -71,14 +73,15 @@ export default function ProfilePage() {
       if (response.success) {
         setShowSuccessPopup(true)
         setTimeout(() => {
+          setShowSuccessPopup(false)
           router.push('/dashboard')
         }, 2000)
       } else {
-        alert(response.message || 'Failed to save profile')
+        setError(response.message || 'Gagal menyimpan profil')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save profile error:', err)
-      alert('Failed to connect to server')
+      setError(err.message || 'Gagal terhubung ke server')
     } finally {
       setIsSaving(false)
     }
@@ -110,8 +113,8 @@ export default function ProfilePage() {
               <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(16,185,129,0.4)]">
                 <Check size={40} className="text-[#020617]" />
               </div>
-              <h2 className="text-3xl font-black mb-2">Saved!</h2>
-              <p className="text-gray-400">Profile updated successfully. Returning to portal...</p>
+              <h2 className="text-3xl font-black mb-2">Tersimpan!</h2>
+              <p className="text-gray-400">Profil berhasil diperbarui. Kembali ke portal...</p>
             </motion.div>
           </motion.div>
         )}
@@ -123,6 +126,15 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-[40px] p-10 border border-white/10"
         >
+          {error && (
+            <div className="mb-8 bg-red-500/10 border-2 border-red-500/50 text-red-500 p-5 rounded-2xl text-sm font-bold flex items-center gap-4 animate-shake">
+              <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center shrink-0">
+                <AlertCircle size={22} />
+              </div>
+              <span>{error}</span>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row items-center gap-10 mb-12">
             <div className="relative group">
               <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-cyan-500 to-purple-500 p-1">
@@ -163,7 +175,7 @@ export default function ProfilePage() {
               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-3 text-purple-400 mb-2">
                   <Mail size={18} />
-                  <span className="text-xs font-bold uppercase tracking-widest">Email Address</span>
+                  <span className="text-xs font-bold uppercase tracking-widest">Alamat Email</span>
                 </div>
                 <p className="text-lg font-medium">{profile?.email}</p>
               </div>
@@ -173,13 +185,13 @@ export default function ProfilePage() {
               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-3 text-emerald-400 mb-2">
                   <MapPin size={18} />
-                  <span className="text-xs font-bold uppercase tracking-widest">Domicile</span>
+                  <span className="text-xs font-bold uppercase tracking-widest">Domisili</span>
                 </div>
                 <input 
                   type="text" 
-                  value={domisili}
-                  onChange={(e) => setDomisili(e.target.value)}
-                  placeholder="e.g. Depok"
+                  value={domicile}
+                  onChange={(e) => setDomicile(e.target.value)}
+                  placeholder="Contoh: Depok"
                   className="bg-transparent w-full text-lg font-medium outline-none border-b border-white/0 focus:border-cyan-500 transition-colors"
                 />
               </div>
@@ -187,12 +199,12 @@ export default function ProfilePage() {
               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-3 text-pink-400 mb-2">
                   <Heart size={18} />
-                  <span className="text-xs font-bold uppercase tracking-widest">Personal Bio</span>
+                  <span className="text-xs font-bold uppercase tracking-widest">Bio Pribadi</span>
                 </div>
                 <textarea 
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell us about yourself..."
+                  placeholder="Ceritakan tentang dirimu..."
                   className="bg-transparent w-full text-gray-300 outline-none resize-none"
                   rows={2}
                 />
@@ -202,7 +214,7 @@ export default function ProfilePage() {
 
           <div className="bg-white/5 p-8 rounded-[32px] border border-white/5">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-              <Plus size={24} className="text-cyan-400" /> My Hobbies & Interests
+              <Plus size={24} className="text-cyan-400" /> Hobi & Minat Saya
             </h2>
             
             <div className="flex flex-wrap gap-3 mb-8">
@@ -223,9 +235,9 @@ export default function ProfilePage() {
               <select 
                 value={newHobby}
                 onChange={(e) => setNewHobby(e.target.value)}
-                className="flex-1 bg-[#020617] border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-cyan-500 transition-colors"
+                className="flex-1 bg-[#020617] border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-cyan-500 transition-colors text-gray-300"
               >
-                <option value="">Select Category...</option>
+                <option value="">Pilih Kategori...</option>
                 <option value="Study Group">📚 Study Group</option>
                 <option value="Gaming">🎮 Gaming</option>
                 <option value="Hangout">☕ Hangout</option>
@@ -236,7 +248,7 @@ export default function ProfilePage() {
                 onClick={addHobby}
                 className="px-8 bg-white text-[#020617] font-bold rounded-2xl hover:bg-cyan-400 transition-colors"
               >
-                Add
+                Tambah
               </button>
             </div>
           </div>
@@ -246,7 +258,7 @@ export default function ProfilePage() {
             disabled={isSaving}
             className="w-full mt-10 py-5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl text-xl font-bold hover:shadow-[0_0_30px_rgba(34,211,238,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </motion.div>
       </main>

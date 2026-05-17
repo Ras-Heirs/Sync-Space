@@ -1,23 +1,36 @@
 @import "tailwindcss";
 
-body {
-  background-color: #020617; 
-  color: #ffffff;
-  /* Paksa seluruh teks menggunakan Plus Jakarta Sans */
-  font-family: var(--font-jakarta), sans-serif; 
+@theme {
+  --color-neon-cyan: #22d3ee;
+  --color-neon-purple: #a855f7;
 }
 
-/* Custom Utilities (Biarkan sama seperti sebelumnya) */
-@layer utilities {
-  .glass {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-  }
+body {
+  background-color: #020617;
+  color: #ffffff;
+  /* Paksa seluruh teks menggunakan Plus Jakarta Sans */
+  font-family: var(--font-jakarta), sans-serif;
+}
 
-  .neon-text {
-    background-image: linear-gradient(to right, #22d3ee, #a855f7);
-    -webkit-background-clip: text;
-    color: transparent;
-  }
+@utility glass {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+@utility neon-text {
+  background-image: linear-gradient(to right, var(--color-neon-cyan), var(--color-neon-purple));
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+  75% { transform: translateX(-10px); }
+}
+
+@utility animate-shake {
+  animation: shake 0.3s ease-in-out;
 }
