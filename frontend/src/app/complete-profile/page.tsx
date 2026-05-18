@@ -35,17 +35,28 @@ export default function CompleteProfilePage() {
     try {
       const hobbyArray = hobbies.split(',').map(h => h.trim()).filter(h => h !== '')
       
+      // 1. Ubah method jadi PATCH
+      // 2. Pastikan HANYA mengirimkan name, domicile, dan hobbies
       const response = await fetchWithAuth('/user/profile', {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify({
-          name,
-          domicile,
+          name: name,
+          domicile: domicile,
           hobbies: hobbyArray
         })
       })
 
       if (response.success) {
-        localStorage.setItem('user', JSON.stringify(response.payload))
+        // Perbarui data di memori browser agar sinkron
+        const userStr = localStorage.getItem('user')
+        let userData = userStr ? JSON.parse(userStr) : {}
+        
+        userData.name = name
+        userData.domicile = domicile
+        userData.hobbies = hobbyArray
+        
+        localStorage.setItem('user', JSON.stringify(userData))
+        
         router.push('/dashboard')
       } else {
         setError(response.message || 'Gagal menyimpan profil')

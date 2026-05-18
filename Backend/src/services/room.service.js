@@ -1,5 +1,5 @@
 const { db } = require('../database/drizzle');
-const { rooms, participants, categories } = require('../models/schema');
+const { rooms, participants, categories, users } = require('../models/schema');
 const { eq, and, or, ilike, sql, gte, lte, desc } = require('drizzle-orm');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -63,19 +63,26 @@ class RoomService {
 
     // Fetch full user details if only partial user (from token) is provided
     let fullUser = null;
-    if (user && user.id && !user.domicile) {
-      [fullUser] = await db.select().from(users).where(eq(users.id, user.id));
-    } else {
-      fullUser = user;
+    if (user && user.id) {
+      // Ambil dari database untuk memastikan kita punya data 'domicile' dan 'hobbies' yang utuh
+      const result = await db.select().from(users).where(eq(users.id, user.id));
+      fullUser = result[0];
     }
 
-    // Ranking Logic
     let rankSql = sql`0`;
     if (fullUser) {
-      const domicileRank = sql`CASE WHEN ${rooms.region} = ${fullUser.domicile} THEN 1 ELSE 0 END`;
-      const hobbiesRank = fullUser.hobbies && fullUser.hobbies.length > 0 
-        ? sql`CASE WHEN ${categories.name} = ANY(${fullUser.hobbies}) THEN 1 ELSE 0 END`
-        : sql`0`;
+      const userDomicile = fullUser.domicile || '';
+      const userHobbies = fullUser.hobbies || [];
+
+      const domicileRank = sql`CASE WHEN ${rooms.region} = ${userDomicile} THEN 1 ELSE 0 END`;
+
+      let hobbiesRank = sql`0`;
+      if (userHobbies.length > 0) {
+        const hobbiesConditions = userHobbies.map(h => sql`${categories.name} = ${h}`);
+        const combinedHobbies = hobbiesConditions.reduce((a, b) => sql`${a} OR ${b}`);
+        hobbiesRank = sql`CASE WHEN (${combinedHobbies}) THEN 1 ELSE 0 END`;
+      }
+
       rankSql = sql`(${domicileRank} + ${hobbiesRank})`;
     }
 
