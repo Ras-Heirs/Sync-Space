@@ -87,29 +87,3 @@ exports.deleteRoom = async (req, res, next) => {
   }
 };
 
-exports.sendMessage = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { message } = req.body;
-    
-    // Ensure we have a name
-    let senderName = req.user.name;
-    if (!senderName) {
-      const user = await userService.getUserById(req.user.id);
-      senderName = user ? user.name : req.user.email;
-    }
-
-    await pusher.trigger(`room-${id}`, "message", {
-      sender: senderName,
-      text: message,
-      timestamp: new Date().toISOString()
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Message sent'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
